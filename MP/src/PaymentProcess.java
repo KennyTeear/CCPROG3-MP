@@ -1,121 +1,54 @@
-import java.util.HashMap;
 import java.util.Map;
 
-
 /**
- * Handles the payment process in a vending machine.
+ * Handles the payment process in a vending machine using PaymentUtils.
  */
 public class PaymentProcess {
     private int balance;
     private Map<String, Integer> billDenominations;
 
     /**
-     * Constructs a transaction with the specified item and payment.
-     *
-     * @param balance    the item in the transaction
+     * Constructs a PaymentProcess with an initial balance.
+     * @param balance the initial balance of the vending machine
      */
     public PaymentProcess(int balance) {
         this.balance = balance;
-        this.billDenominations = new HashMap<>();
-        initializeBillDenominations();
+        this.billDenominations = PaymentUtils.initializeBillDenominations(); // Initialize denominations
     }
-
-    // Initialize the bill denominations with initial quantities
-    private void initializeBillDenominations() {
-        billDenominations.put("20", 0);
-        billDenominations.put("50", 0);
-        billDenominations.put("100", 0);
-        billDenominations.put("200", 0);
-        billDenominations.put("500", 0);
-        billDenominations.put("1000", 0);
-    }
-
-    public void ZeroBillDenominations() {
-        billDenominations.put("20", 0);
-        billDenominations.put("50", 0);
-        billDenominations.put("100", 0);
-        billDenominations.put("200", 0);
-        billDenominations.put("500", 0);
-        billDenominations.put("1000", 0);
-    }
-
 
     /**
      * Receive payment in a specific denomination and update the balance.
-     *
      * @param denomination the denomination of the payment
-     * @param quantity     the quantity of the payment
+     * @param quantity the quantity of the payment
      */
     public void receivePayment(String denomination, int quantity) {
         if (billDenominations.containsKey(denomination)) {
             int currentQuantity = billDenominations.get(denomination);
             billDenominations.put(denomination, currentQuantity + quantity);
-            int amount = getDenominationAmount(denomination) * quantity;
-            balance += amount;
+            int amount = PaymentUtils.getDenominationAmount(denomination) * quantity;
+            balance += amount; // Update balance
             System.out.println("Received payment of " + amount);
         } else {
             System.out.println("Invalid denomination");
         }
     }
 
-
     /**
      * Dispenses change to the user and updates the balance.
-     *
      * @param change the amount of change to dispense
      */
     public void giveChange(int change) {
-        if (balance >= change) {
-            if (hasSufficientChange(change)) {
-                balance -= change;
-                distributeChange(change);
-                System.out.println("Dispensed change of " + change);
-            } else {
-                System.out.println("Insufficient change in the machine");
-            }
+        if (PaymentUtils.hasSufficientChange(change, balance, billDenominations)) {
+            balance -= change; // Deduct from balance
+            PaymentUtils.distributeChange(change, billDenominations); // Dispense change
+            System.out.println("Dispensed change of " + change);
         } else {
-            System.out.println("Insufficient balance to provide change");
+            System.out.println("Insufficient change in the machine");
         }
     }
-
-    // Check if the machine has sufficient change to provide
-    private boolean hasSufficientChange(int change) {
-        return balance >= change && change <= getTotalChange();
-    }
-
-    // Calculate the total change available in the machine
-    private int getTotalChange() {
-        int totalChange = 0;
-        for (Map.Entry<String, Integer> entry : billDenominations.entrySet()) {
-            String denomination = entry.getKey();
-            int quantity = entry.getValue();
-            totalChange += getDenominationAmount(denomination) * quantity;
-        }
-        return totalChange;
-    }
-
-    // Distribute the change to the user using available bill denominations
-    private void distributeChange(int change) {
-        for (Map.Entry<String, Integer> entry : billDenominations.entrySet()) {
-            String denomination = entry.getKey();
-            int quantity = entry.getValue();
-            int denominationAmount = getDenominationAmount(denomination);
-            while (change >= denominationAmount && quantity > 0) {
-                change -= denominationAmount;
-                quantity--;
-                System.out.println("Dispensed " + denomination);
-            }
-            billDenominations.put(denomination, quantity);
-            if (change == 0) {
-                break;
-            }
-        }
-    }
-
 
     /**
      * Replenishes the quantity of a specific bill denomination in the vending machine.
-     *
      * @param denomination the denomination of the bill to replenish
      * @param quantity the quantity of bills to replenish
      */
@@ -129,40 +62,18 @@ public class PaymentProcess {
         }
     }
 
-
     /**
      * Collect the payment and reset the balance to zero.
-     *
      * @return the collected payment amount
      */
     public int collectPayment() {
         int collectedAmount = balance;
-        balance = 0;
+        balance = 0; // Reset balance after collection
         return collectedAmount;
     }
 
-    // Get the amount associated with a specific denomination
-    private int getDenominationAmount(String denomination) {
-        switch (denomination) {
-            case "20":
-                return 20;
-            case "50":
-                return 50;
-            case "100":
-                return 100;
-            case "200":
-                return 200;
-            case "500":
-                return 500;
-            case "1000":
-                return 1000;
-            default:
-                return 0;
-        }
-    }
     /**
      * Get the current balance.
-     *
      * @return the current balance
      */
     public int getBalance() {
@@ -171,16 +82,25 @@ public class PaymentProcess {
 
     /**
      * Displays the available bills and their quantities in the vending machine.
+     * @return A formatted string of available bills
      */
     public String displayAvailableBills() {
         StringBuilder sb = new StringBuilder();
         sb.append("Available Bills:\n");
         for (Map.Entry<String, Integer> entry : billDenominations.entrySet()) {
-            String denomination = entry.getKey();
-            int quantity = entry.getValue();
-            sb.append(denomination).append(": ").append(quantity).append("\n");
+            sb.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
         }
         return sb.toString();
+    }
+
+        /**
+     * Resets all bill denominations to zero.
+     */
+    public void zeroBillDenominations() {
+        for (String denomination : billDenominations.keySet()) {
+            billDenominations.put(denomination, 0);
+        }
+        System.out.println("All bill denominations have been reset to zero.");
     }
 
 }
